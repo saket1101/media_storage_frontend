@@ -1,0 +1,1 @@
+export const Backend_Url = import.meta.env.VITE_Base_URL_Backend
