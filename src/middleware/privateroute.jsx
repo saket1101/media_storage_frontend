@@ -1,9 +1,17 @@
-import React from 'react'
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import Layout from "../components/Layout";
 
-const privateroute = () => {
-  return (
-    <div>privateroute</div>
-  )
-}
+const PrivateRoute = () => {
+  const isAuthenticated = !!localStorage.getItem("token"); 
 
-export default privateroute
+  return isAuthenticated ? (
+    <Layout>
+      <Outlet />
+    </Layout>
+  ) : (
+    <Navigate to="/login" replace />
+  );
+};
+
+export default PrivateRoute;

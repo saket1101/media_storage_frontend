@@ -1,62 +1,79 @@
 import React, { useState } from "react";
 
 const Upload = () => {
-  const [files, setFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles(selectedFiles);
+    const selectedFile = e.target.files[0];
 
-    const urls = selectedFiles.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
+    if (selectedFile) {
+      if (selectedFile.size > 3 * 1024 * 1024) {
+        setError("File size should not exceed 3MB.");
+        setFile(null);
+        return;
+      }
+      setError("");
+      setFile(selectedFile);
+    }
   };
 
   const handleUpload = () => {
-    if (files.length === 0) return alert("Please select a file to upload");
-    console.log("Uploading", files);
-    // API call to upload files
-  };
-
-  const handleDelete = (index) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    setPreviewUrls((prevUrls) => prevUrls.filter((_, i) => i !== index));
+    if (!file) {
+      setError("Please select a file to upload.");
+      return;
+    }
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-4">Media Management</h2>
+    <div className="flex items-center justify-center h-[84vh] bg-gray-100">
+      <div className="bg-gray-100 p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4 text-center">Upload Media</h2>
 
-        <input
-          type="file"
-          multiple
-          accept="image/*,video/*"
-          onChange={handleFileChange}
-          className="w-full border p-2 rounded mb-4"
-        />
+        <div className="border-2 border-dashed border-gray-300 p-6 rounded-lg text-center">
+          <input
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            id="fileInput"
+            onChange={handleFileChange}
+          />
+          <label
+            htmlFor="fileInput"
+            className="cursor-pointer block text-purple-600 font-medium"
+          >
+            Click to Upload or Drag & Drop
+          </label>
+          {file && (
+            <p className="mt-2 text-sm text-gray-700">{file.name}</p>
+          )}
+        </div>
 
-        {previewUrls.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            {previewUrls.map((url, index) => (
-              <div key={index} className="relative">
-                <button
-                  onClick={() => handleDelete(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded"
-                >
-                  ×
-                </button>
-                <img src={url} alt="preview" className="w-full h-32 object-cover rounded" />
-              </div>
-            ))}
+        {file && (
+          <div className="mt-4">
+            {file.type.startsWith("image/") ? (
+              <img
+                src={URL.createObjectURL(file)}
+                alt="Preview"
+                className="w-full h-40 object-cover rounded"
+              />
+            ) : file.type.startsWith("video/") ? (
+              <video
+                controls
+                src={URL.createObjectURL(file)}
+                className="w-full h-40 rounded"
+              />
+            ) : null}
           </div>
         )}
 
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
         <button
           onClick={handleUpload}
-          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+          className="mt-4 w-full bg-purple-500 text-white py-2 rounded-md hover:bg-purple-600"
         >
-          Upload Media
+          Upload
         </button>
       </div>
     </div>
