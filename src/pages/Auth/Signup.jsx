@@ -1,21 +1,46 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useRegisterMutation } from "../../redux/apis/UserApis";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const navigate = useNavigate();
+  // rtk querry api callig
+  const [registerUser, { isLoading }] = useRegisterMutation();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      await registerUser(formData).unwrap();
+      toast.success("User registered successfully");
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+      });
+      navigate("/login");
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen items-center justify-center bg-gray-100 p-4">
       <div className="md:w-1/2 text-center md:text-left p-6">
-        <h1 className="text-3xl font-bold text-gray-800">Welcome to Media Store Web</h1>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Welcome to Media Store Web
+        </h1>
         <p className="mt-4 text-gray-600">
           Join us today and start exploring our amazing media collection.
         </p>
@@ -52,11 +77,14 @@ const Signup = () => {
             required
           />
           <button className="w-full bg-purple-500 text-white p-2 rounded mt-4 hover:bg-purple-700">
-            Sign Up
+            {isLoading ? "Loading.." : "Sign Up"}{" "}
           </button>
         </form>
         <p className="text-center mt-4 text-sm">
-          Already have an account? <Link to="/login" className="text-purple-500">Login</Link>
+          Already have an account?{" "}
+          <Link to="/login" className="text-purple-500">
+            Login
+          </Link>
         </p>
       </div>
     </div>

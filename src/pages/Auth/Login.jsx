@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useLoginMutation } from "../../redux/apis/UserApis";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -10,7 +12,10 @@ const Login = () => {
   // navigate
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  // rtk query
+  const [login, { isLoading }] = useLoginMutation();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -18,8 +23,18 @@ const Login = () => {
       setError("Both fields are required.");
       return;
     }
-    localStorage.setItem("token", "123456");
-    navigate("/");
+    try {
+      const result = await login({ email, password }).unwrap();
+      console.log(result);
+      if (result.status) {
+        toast.success("User logged in successfully");
+        localStorage.setItem("token", result.data?._id);
+        navigate("/");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message || "Something went wrong");
+    }
   };
 
   return (
@@ -61,7 +76,7 @@ const Login = () => {
             type="submit"
             className="w-full bg-purple-500 text-white py-2 rounded-md hover:bg-purple-700"
           >
-            Login
+            {isLoading ? "Loading..." : "Login"}
           </button>
         </form>
         <p className="text-sm text-center mt-4">
