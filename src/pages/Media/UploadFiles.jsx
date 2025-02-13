@@ -1,8 +1,13 @@
 import React, { useState } from "react";
+import { useUploadMutation } from "../../redux/apis/MediaApis";
+import { toast } from "react-toastify";
 
 const Upload = () => {
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
+
+  // rtk query
+  const [uploadFile, { isLoading }] = useUploadMutation();
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -18,10 +23,27 @@ const Upload = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) {
       setError("Please select a file to upload.");
       return;
+    }
+    const mimeType = file.type.split("/")[0];
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", mimeType);
+
+      const result = await uploadFile(formData).unwrap();
+
+      if (result.status) {
+        setFile(null);
+        toast.success("File uploaded successfully.");
+        setError("");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to upload file.");
     }
   };
 
@@ -44,9 +66,7 @@ const Upload = () => {
           >
             Click to Upload or Drag & Drop
           </label>
-          {file && (
-            <p className="mt-2 text-sm text-gray-700">{file.name}</p>
-          )}
+          {file && <p className="mt-2 text-sm text-gray-700">{file.name}</p>}
         </div>
 
         {file && (
@@ -73,7 +93,7 @@ const Upload = () => {
           onClick={handleUpload}
           className="mt-4 w-full bg-purple-500 text-white py-2 rounded-md hover:bg-purple-600"
         >
-          Upload
+          {isLoading ? "Uploading..." : "Upload"}
         </button>
       </div>
     </div>

@@ -1,22 +1,27 @@
-import React, { useState } from "react";
-import { Trash2 } from "lucide-react"; 
-
-const sampleMedia = [
-  { id: 1, name: "Image 1", type: "image", url: "https://via.placeholder.com/150" },
-  { id: 2, name: "Video 1", type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
-  { id: 3, name: "Image 2", type: "image", url: "https://via.placeholder.com/150" },
-  { id: 4, name: "Video 2", type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
-];
+import React, { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
+import { useAllfilesQuery, useDeletefilesMutation } from "../../redux/apis/MediaApis";
+import { toast } from "react-toastify";
 
 const AllFiles = () => {
-  const [media, setMedia] = useState(sampleMedia);
   const [filter, setFilter] = useState("all");
 
-  const handleDelete = (id) => {
-    setMedia(media.filter((file) => file.id !== id));
-  };
+  const { data: allFiles, isLoading, refetch } = useAllfilesQuery(filter === "all" ? "" : filter);
+  const [deleteFile,{isLoading:deleteLoading}] = useDeletefilesMutation();
 
-  const filteredMedia = filter === "all" ? media : media.filter((file) => file.type === filter);
+  useEffect(() => {
+    refetch(); 
+  }, [filter, refetch]);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteFile(id).unwrap();
+      refetch();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete file.");
+    }
+  }
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
@@ -27,7 +32,7 @@ const AllFiles = () => {
           <button
             key={type}
             className={`px-4 py-2 rounded ${
-              filter === type ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
+              filter === type ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"
             }`}
             onClick={() => setFilter(type)}
           >
@@ -37,20 +42,19 @@ const AllFiles = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredMedia.length > 0 ? (
-          filteredMedia.map((file) => (
-            <div key={file.id} className="relative bg-white p-3 rounded shadow-md">
-              {file.type === "image" ? (
-                <img src={file.url} alt={file.name} className="w-full h-40 object-cover rounded" />
+        {isLoading ? (
+          <p className="text-gray-500 text-center col-span-3">Loading...</p>
+        ) : allFiles?.data?.length > 0 ? (
+          allFiles.data.map((file) => (
+            <div key={file._id} className="relative bg-white p-3 rounded shadow-md">
+              {file.mediaType === "image" ? (
+                <img src={file.mediaUrl} alt="Media" className="w-full h-40 object-cover rounded" />
               ) : (
-                <video controls src={file.url} className="w-full h-40 rounded" />
+                <video controls src={file.mediaUrl} className="w-full h-40 rounded" />
               )}
-              <p className="mt-2 text-sm text-gray-700">{file.name}</p>
-
-              {/* Delete Icon Button */}
               <button
-                onClick={() => handleDelete(file.id)}
                 className="absolute top-2 right-2 text-gray-600 hover:text-red-600 transition cursor-pointer"
+                onClick={() => handleDelete(file._id)}
               >
                 <Trash2 size={18} />
               </button>
